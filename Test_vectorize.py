@@ -208,7 +208,6 @@ class cal_tfidf:
 		for key in dic:
 			classfiles = dic[key]
 			classid = self.all_class.index(key)
-			#print classid
 			for eachfile in classfiles:
 				#print type(eachfile)  //list
 				#对每个文件进行特征向量转化
