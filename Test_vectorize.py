@@ -188,8 +188,6 @@ class cal_tfidf:
 			for key in dic:
 				total_doc_count = total_doc_count + len(dic[key])
 				class_files = dic[key]
-				#print class_files
-				#print 'woqu'
 				for eachfile in class_files:
 					if eachfeature in eachfile:
 						doc_feature = doc_feature + 1
