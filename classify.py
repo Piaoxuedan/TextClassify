@@ -4,6 +4,7 @@ import sys
 import re
 import math
 from numpy import *
+import operator
 
 class importTrain:
     def __init__(self,input_path,feature_file):
@@ -57,37 +58,47 @@ class importTrain:
         row = dataSet.shape[0]
         dataSet_norm = dataSet - tile(minVals,(row,1))
         dataSet_norm = dataSet_norm/tile(ranges,(row,1))
-        return dataSet_norm ,ranges,minVals
+        return dataSet_norm 
 
-    def classify(self,train_file,test_file):
+    def classify(self,sample,dataSet,labels,k):
+        dataSetSize=dataSet.shape[0]     #数据集行数即数据集记录数
+        '''距离计算'''
+        diffMat=tile(sample,(dataSetSize,1))-dataSet         #样本与原先所有样本的差值矩阵
+        sqDiffMat=diffMat**2      #差值矩阵平方
+        sqDistances=sqDiffMat.sum(axis=1)       #计算每一行上元素的和
+        distances=sqDistances**0.5   #开方
+        sortedDistIndicies=distances.argsort()      #按distances中元素进行升序排序后得到的对应下标的列表
+        '''选择距离最小的k个点'''
+        classCount={}
+        for i in range(k):
+            voteIlabel=labels[sortedDistIndicies[i]]
+            classCount[voteIlabel]=classCount.get(voteIlabel,0) + 1
+        '''从大到小排序'''
+        sortedClassCount=sorted(classCount.items(),key=operator.itemgetter(1),reverse=True)
+        return sortedClassCount[0][0]
+
+    def test(self,train_file,test_file):
         (trainMat, trainClass) = self.importData('train.txt')
         (testMat,testClass) = self.importData('test.txt')
+        #normTrainMat=self.Normalized(trainMat)
+        #normTestMat = self.Normalized(testMat)
         rowSize = trainMat.shape[0]
-        vectorid = 0
+        total = testMat.shape[0]
+        errorCount = 0.0
+        k=50
+        index = 0
         for vector in testMat:
-            vectorid += 1
-            expand_vector = tile(vector,(rowSize,1))
-            diffMat = expand_vector - trainMat
-            #print diffMat
-            sq_diffMat = diffMat ** 2
-            #print sq_diffMat
-            #print 'sdkfjsflks'
-            sq_distances = sq_diffMat.sum(axis = 1,dtype = float)
-            distances = sq_distances ** 0.5
-            minValue = distances.min(0)
-            index = 0
-            for minvector in distances:                
-                if minvector == minValue:
-                    index = index
-                else:
-                    index +=1 
-            judged_id = trainClass[index]
-            #print judged_id
-            given_id = testClass[vectorid-1]
-            #print given_id
-            #print 'haha'
+            index += 1
+            classifer_result = self.classify(testMat,trainMat,trainClass,k)
+            print("The classifier came back with: %s, the real answer is: %s" % (classifer_result, testClass[index-1]))
+            if classifer_result != testClass[index-1]:
+                errorCount +=1.0
+            else:
+                errorCount = errorCount
+        print("the total error rate is: %f" % (errorCount/float(total)))
+
      
 if __name__ == "__main__":
-    inputdata = importTrain('D:/Project/classifier python/final_case/','test_feature.txt')
-    inputdata.classify("train.txt","test.txt")
+    inputdata = importTrain('D:/Project/classifier python/final_case/','feature.txt')
+    inputdata.test('train.txt','test.txt')
     
