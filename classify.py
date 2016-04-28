@@ -89,7 +89,7 @@ class importTrain:
         index = 0
         for vector in testMat:
             index += 1
-            classifer_result = self.classify(testMat,trainMat,trainClass,k)
+            classifer_result = self.classify(vector,trainMat,trainClass,k)
             print("The classifier came back with: %s, the real answer is: %s" % (classifer_result, testClass[index-1]))
             if classifer_result != testClass[index-1]:
                 errorCount +=1.0
