@@ -96,7 +96,6 @@ class feature:
 		for i in xrange(0,len_of_tfidf,2):
 			tfidf_sorted_dic = dict()
 			classname = tfidf_tuple[i]
-			#print tfidf_tuple[i+1]
 			tfidf_sorted.append(classname)
 			tfidf_sorted_dic = sorted(tfidf_tuple[i+1].items(),key = lambda d:d[1],reverse = True)
 			tfidf_sorted.append(tfidf_sorted_dic)
@@ -108,14 +107,76 @@ class feature:
 			sorted_list = tfidf_sorted[j+1][0:k]
 			for w in xrange(len(sorted_list)):
 				feature.append(sorted_list[w][0])
-				file.write(sorted_list[w][0].encode('utf-8'))
+				file.write(sorted_list[w][0].encode('utf-8')) #####
 				file.write('\n')
+				#if j == (len_of_tfidf_sorted-2):  
+				#	continue
+				#else:
+				#	file.write('\n')
 		file.close()
+
+	def vector_tfidf(self,idf_dic):
+		len_of_fileword = len(self.FileWord_tuple)
+		vector_value_tuple = []
+		for i in xrange(0,len_of_fileword,3):
+			vector_value_tuple.append(self.FileWord_tuple[i])
+			vector_value_tuple.append(self.FileWord_tuple[i+1])
+			zidian = self.FileWord_tuple[i+2]
+			vector_value_dic = dict()
+			for key in zidian.keys():
+				tf = zidian[key]
+				df = idf_dic[key]
+				idf = math.log(float(self.total_count/df))
+				tf_idf = float(tf) * float(idf)
+				vector_value_dic[key.encode('utf-8')] = tf_idf
+			vector_value_tuple.append(vector_value_dic)
+		return vector_value_tuple
+
+	def write_train(self,vector,filename,writetofile):
+		featureFile = open(filename,'r')
+		featureContent = featureFile.read().split("\n")
+		featureFile.close()
+		feature = list()
+		for eachfeature in featureContent:
+			eachfeature = eachfeature.split(" ")
+			if (len(eachfeature)==1):
+				feature.append(eachfeature[0])
+		feature_2 = []
+		for k in range(0,len(feature)-1):
+			feature_2.append(feature[k])
+		print len(feature_2)
+		len_of_vector_value = len(vector)
+		final_tuple = []
+		for i in range(0,len_of_vector_value,3):
+			final_tuple.append(vector[i])
+			zidian = vector[i+2]
+			final_dic = dict()
+			for key in feature_2:
+				if key in zidian:
+					final_dic[key] = zidian[key]
+				else:
+					final_dic[key] = 0
+			final_tuple.append(final_dic)
+		print final_tuple
+		file = open(writetofile,'w+')
+		for j in xrange(0,len(final_tuple),2):
+			file.write(final_tuple[j])
+			last_dic = final_tuple[j+1]
+			s = str(last_dic)
+			file.write(s)
+			file.write('\n')
+			#if j == (len(final_tuple)-2):
+				#break
+			#else:
+				#file.write('\n')
+
 
 if __name__ == '__main__':
 	featureTest = feature('data/ClassFile')
 	featureTest.buildItemSets()
 	dic = featureTest.feature_IDF()
 	tfidf = featureTest.tfidf_cal(dic)
-	featureTest.feature_select(tfidf,20,'feature.txt')
+	featureTest.feature_select(tfidf,20,'feature.txt')  #数字为一类中提取的特征词数量
+	vector = featureTest.vector_tfidf(dic)
+	featureTest.write_train(vector,'feature.txt','train.txt')
 
